@@ -40,8 +40,8 @@ test ! -w "$HOME"/.ssh && echo "WARNING: '$HOME/.ssh' is not writeable" || {
 
 test -f "$HOME"/build-info.txt && echo "$HOME/build-info.txt:" && cat "$HOME"/build-info.txt && echo
 
-test -r "$CMD_BASE"/env-vars.sh && \
-  . "$CMD_BASE"/env-vars.sh
+test -r "$CMD_BASE"/setup-env-vars && \
+  . "$CMD_BASE"/setup-env-vars
 
 test -r "$HOME"/.ssh/docker-config.json && {
   mkdir -p "$HOME"/.docker
@@ -78,8 +78,8 @@ test root != "$_USER" && test -d /etc/ssh && \
   test ! -d /var/run/sshd && \
     mkdir -p /var/run/sshd && chmod 0755 /var/run/sshd
 
-test -x /keytool-import-certs.sh && dir_not_empty "$SSH_CONFIG_VOLUME"/certs && \
-  /keytool-import-certs.sh --force
+test -x /usr/local/bin/keytool-import-certs && dir_not_empty "$SSH_CONFIG_VOLUME"/certs && \
+  /usr/local/bin/keytool-import-certs --force
 
 id $_USER
 echo "[$_USER] About to run: $*"
