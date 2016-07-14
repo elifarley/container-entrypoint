@@ -90,6 +90,9 @@ test root != "$_USER" && test -d /etc/ssh && \
 test -x /usr/local/bin/keytool-import-certs && dir_not_empty "$SSH_CONFIG_VOLUME"/certs && \
   /usr/local/bin/keytool-import-certs --force
 
+test -x "$HOME"/app-before-start.sh && echo "[$(id -un)] About to run: $HOME/app-before-start.sh" && \
+  "$HOME"/app-before-start.sh || return
+
 id $_USER
 test $# -eq 0 && test -x "$HOME"/app.sh && set -- "$HOME"/app.sh
 echo "[$_USER] About to run: $*"
