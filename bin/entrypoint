@@ -22,9 +22,14 @@ test -S /var/run/docker.sock && test $(id -u "$_USER") != $(stat -c "%u" /var/ru
 MNT_DIR="${MNT_DIR:-/data}"
 if test -e "$MNT_DIR"; then
   mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
-  test $mnt_dir_uid -ne $(id -u "$_USER") && \
+  test $mnt_dir_uid -ne $(id -u "$_USER") && {
+    getent passwd $mnt_dir_uid && \
+    echo "'$MNT_DIR' is owned by an existing user. Let's change its owner to '$_USER'..." && {
+      chown "$_USER" "$MNT_DIR" || return
+    } || \
     echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of '$MNT_DIR'..." && \
     usermod -u $mnt_dir_uid "$_USER"
+  }
 else
   echo "Creating '$MNT_DIR'..."
   mkdir "$MNT_DIR" && chown "$_USER:$_USER" "$MNT_DIR"
