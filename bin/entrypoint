@@ -2,9 +2,12 @@
 CMD_BASE="$(readlink -f $0)" || CMD_BASE="$0"; CMD_BASE="$(dirname $CMD_BASE)"
 set -e
 
-dir_not_empty() { test "$(ls -A "$@" 2>/dev/null)" ;}
-
 test "$DEBUG" && set -x
+
+_INCLUDES=env-vars
+for item in $_INCLUDES; do . "$CMD_BASE/../lib/$item.sh"; done
+
+dir_not_empty() { test "$(ls -A "$@" 2>/dev/null)" ;}
 
 test -f "$HOME"/image-build.log && echo "$HOME/image-build.log:" && cat "$HOME"/image-build.log && echo
 
@@ -47,8 +50,7 @@ test ! -w "$HOME"/.ssh && echo "WARNING: '$HOME/.ssh' is not writeable" || {
 
 test -f "$HOME"/build-info.txt && echo "$HOME/build-info.txt:" && cat "$HOME"/build-info.txt && echo
 
-test -r "$CMD_BASE"/setup-env-vars && \
-  . "$CMD_BASE"/setup-env-vars
+setup_env_vars
 
 test -r "$HOME"/.ssh/docker-config.json && {
   mkdir -p "$HOME"/.docker
