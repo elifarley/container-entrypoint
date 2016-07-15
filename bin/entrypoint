@@ -27,7 +27,7 @@ if test -e "$MNT_DIR"; then
   mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
   test $mnt_dir_uid -ne $(id -u "$_USER") && {
     if getent >/dev/null passwd $mnt_dir_uid; then
-      ls -lhFart "$MNT_DIR"
+      echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
       echo "'$MNT_DIR' is owned by an existing user. Let's change its owner to '$_USER'..."
       chown "$_USER" "$MNT_DIR" || return
     else
