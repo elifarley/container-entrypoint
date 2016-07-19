@@ -108,7 +108,7 @@ test $# -eq 0 && test -x "$HOME"/app.sh && set -- "$HOME"/app.sh
 echo "[$_USER] About to run: $*"
 
 test "$(id -un)" = "$_USER" && sudo='' || {
-  sudo="$(psudo) '$_USER'" || return
+  sudo="$(psudo) $_USER" || return
 }
 
 printf "exec $sudo $*
