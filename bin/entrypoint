@@ -2,6 +2,14 @@
 CMD_BASE="$(readlink -f $0)" || CMD_BASE="$0"; CMD_BASE="$(dirname $CMD_BASE)"
 set -e
 
+psudo() {
+  local sudo=''; type 1>/dev/null su-exec && sudo=su-exec
+  test ! "$sudo" && type 1>/dev/null gosu && sudo=gosu
+  test ! "$sudo" && type 1>/dev/null sudo && sudo='sudo -u'
+  test ! "$sudo" && echo >&2 "Please install su-exec, gosu or sudo" && return 1
+  printf "$sudo"
+}
+
 test "$DEBUG" && set -x
 
 _INCLUDES=env-vars
@@ -99,11 +107,10 @@ id $_USER
 test $# -eq 0 && test -x "$HOME"/app.sh && set -- "$HOME"/app.sh
 echo "[$_USER] About to run: $*"
 
-test "$(id -un)" = "$_USER" && \
-printf "exec $*
----------------------------------\n
-" && exec "$@"
+test "$(id -un)" = "$_USER" && sudo='' || {
+  sudo="$(psudo) '$_USER'" || return
+}
 
-printf "exec gosu '$_USER' $*
+printf "exec $sudo $*
 ---------------------------------\n
-" && exec gosu "$_USER" "$@"
+" && exec $sudo "$@"
