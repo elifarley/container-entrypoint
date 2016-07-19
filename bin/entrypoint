@@ -12,7 +12,7 @@ psudo() {
 
 test "$DEBUG" && set -x
 
-_home="$(eval echo ~"$_USER")"
+_home="$(eval echo ~"$_USER")"; test -e "$_home" || _home="$HOME"
 
 _INCLUDES=env-vars
 for item in $_INCLUDES; do . "$CMD_BASE/../lib/$item.sh"; done
