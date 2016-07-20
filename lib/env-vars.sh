@@ -1,3 +1,5 @@
+test "$DEBUG" && set -x
+
 process_env_file() {
   local env_file="$1"
   local to_export="$2"
