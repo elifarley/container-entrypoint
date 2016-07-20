@@ -2,22 +2,12 @@
 CMD_BASE="$(readlink -f $0)" || CMD_BASE="$0"; CMD_BASE="$(dirname $CMD_BASE)"
 set -e
 
-psudo() {
-  local sudo=''; type 1>/dev/null su-exec && sudo=su-exec
-  test ! "$sudo" && type 1>/dev/null gosu && sudo=gosu
-  test ! "$sudo" && type 1>/dev/null sudo && sudo='sudo -u'
-  test ! "$sudo" && echo >&2 "Please install su-exec, gosu or sudo" && return 1
-  printf "$sudo"
-}
-
 test "$DEBUG" && set -x
 
 _home="$(eval echo ~"$_USER")"; test -e "$_home" || _home="$HOME"
 
-_INCLUDES=env-vars
+_INCLUDES='env-vars main'
 for item in $_INCLUDES; do . "$CMD_BASE/../lib/$item.sh"; done
-
-dir_not_empty() { test "$(ls -A "$@" 2>/dev/null)" ;}
 
 test -f "$_home"/image-build.log && echo "$_home/image-build.log:" && cat "$_home"/image-build.log && echo
 
