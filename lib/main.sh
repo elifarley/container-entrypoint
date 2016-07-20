@@ -2,7 +2,6 @@ dir_not_empty() { test "$(ls -A "$@" 2>/dev/null)" ;}
 foreach() { local cmd="$1"; shift; for i; do $cmd "$i"; done ;}
 argsep() { local IFS="$1"; shift; local cmd="$1"; shift; set -- $@; $cmd "$@" ;}
 
-linklogfiles() { foreach linklogfile "$@" ;}
 linklogfile() {
   local logfile="$1";
   local target="${logfile##*:}"; test "$target" = "$logfile" && target=''
