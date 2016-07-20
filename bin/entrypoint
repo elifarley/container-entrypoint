@@ -87,7 +87,7 @@ test root != "$_USER" && test -d /etc/ssh && \
   test ! -d /var/run/sshd && \
     mkdir -p /var/run/sshd && chmod 0755 /var/run/sshd
 
-test "$CEP_LOG_FILES" && argsep ',;' linklogfiles "$CEP_LOG_FILES"
+test "$CEP_LOG_FILES" && linklogfiles "$CEP_LOG_FILES"
 
 test -x /usr/local/bin/keytool-import-certs && dir_not_empty "$SSH_CONFIG_VOLUME"/certs && \
   /usr/local/bin/keytool-import-certs --force
