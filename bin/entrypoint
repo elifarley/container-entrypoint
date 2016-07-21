@@ -87,7 +87,12 @@ test root != "$_USER" && test -d /etc/ssh && \
   test ! -d /var/run/sshd && \
     mkdir -p /var/run/sshd && chmod 0755 /var/run/sshd
 
-test "$CEP_LOG_FILES" && linklogfiles "$CEP_LOG_FILES"
+test "$(id -un)" = "$_USER" && sudo='' || {
+  sudo="$(psudo) $_USER" || return
+  ln() { $sudo ln "$@"; }
+}
+
+test "$CEP_LOG_FILES" && linklogfiles "$CEP_LOG_FILES"; unset ln
 
 test -x /usr/local/bin/keytool-import-certs && dir_not_empty "$SSH_CONFIG_VOLUME"/certs && \
   /usr/local/bin/keytool-import-certs --force
@@ -100,10 +105,6 @@ test -x "$_home"/app-before-start.sh && {
 id $_USER
 test $# -eq 0 && test -x "$_home"/app.sh && set -- "$_home"/app.sh
 echo "[$_USER] About to run: $*"
-
-test "$(id -un)" = "$_USER" && sudo='' || {
-  sudo="$(psudo) $_USER" || return
-}
 
 printf "exec $sudo $*
 ---------------------------------\n
