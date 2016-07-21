@@ -88,7 +88,7 @@ test root != "$_USER" && test -d /etc/ssh && \
     mkdir -p /var/run/sshd && chmod 0755 /var/run/sshd
 
 test "$(id -un)" = "$_USER" && sudo='' || {
-  sudo="$(psudo) $_USER" || return
+  sudo="$(psudo "$_USER")" || return
   ln() { $sudo ln "$@"; }
 }
 
