@@ -2,13 +2,19 @@ dir_not_empty() { test "$(ls -A "$@" 2>/dev/null)" ;}
 foreach() { local cmd="$1"; shift; for i; do $cmd "$i"; done ;}
 argsep() { local IFS="$1"; shift; local cmd="$1"; shift; set -- $@; $cmd "$@" ;}
 
-linklogfiles() { argsep ',;' foreach linklogfile "$@" ;}
+linklogfiles() {
+  mkfifo -m 600 /tmp/logpipe_out && mkfifo -m 600 /tmp/logpipe_err && \
+  chown "$1" /tmp/logpipe* && shift || return
+  cat <> /tmp/logpipe_out &
+  cat <> /tmp/logpipe_err >&2 &
+  argsep ',;' foreach linklogfile "$@"
+}
+
 linklogfile() {
   local logfile="$1";
   local target="${logfile##*:}"; test ! "$target" -o "$target" = "$logfile" && target='out'
-  case "$target" in out) target=1;; err) target=2;; *) echo "Invalid target: '$target'"; return 1 ;; esac
   logfile="${logfile%%:*}"; test -L "$logfile" -o -e "$logfile" && ls -Falk "$logfile" && return
-  ln -vsf /proc/self/fd/"$target" "$logfile"
+  ln -vsf /tmp/logpipe_"$target" "$logfile"
 }
 
 psudo() {
