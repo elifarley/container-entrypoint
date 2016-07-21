@@ -5,8 +5,8 @@ argsep() { local IFS="$1"; shift; local cmd="$1"; shift; set -- $@; $cmd "$@" ;}
 linklogfiles() {
   eval $sudo mkfifo -m 600 /tmp/logpipe_out && eval $sudo mkfifo -m 600 /tmp/logpipe_err || \
     return
-  eval $sudo cat <> /tmp/logpipe_out &
-  eval $sudo cat <> /tmp/logpipe_err >&2 &
+  cat <> /tmp/logpipe_out &
+  cat <> /tmp/logpipe_err >&2 &
   argsep ',;' foreach linklogfile "$@"
 }
 
