@@ -5,9 +5,9 @@ argsep() { local IFS="$1"; shift; local cmd="$1"; shift; set -- $@; $cmd "$@" ;}
 linklogfiles() { argsep ',;' foreach linklogfile "$@" ;}
 linklogfile() {
   local logfile="$1";
-  local target="${logfile##*:}"; test "$target" = "$logfile" && target=''
-  test "$target" && logfile="${logfile%%:*}" && case "$target" in out) target=1;; err) target=2;; esac
-  test -L "$logfile" -o -e "$logfile" && ls -Falk "$logfile" && return
+  local target="${logfile##*:}"; test ! "$target" -o "$target" = "$logfile" && target='out'
+  case "$target" in out) target=1;; err) target=2;; *) echo "Invalid target: '$target'"; return 1 ;; esac
+  logfile="${logfile%%:*}"; test -L "$logfile" -o -e "$logfile" && ls -Falk "$logfile" && return
   ln -vsf /proc/self/fd/"$target" "$logfile"
 }
 
