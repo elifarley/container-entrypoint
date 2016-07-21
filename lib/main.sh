@@ -3,10 +3,10 @@ foreach() { local cmd="$1"; shift; for i; do $cmd "$i"; done ;}
 argsep() { local IFS="$1"; shift; local cmd="$1"; shift; set -- $@; $cmd "$@" ;}
 
 linklogfiles() {
-  mkfifo -m 600 /tmp/logpipe_out && mkfifo -m 600 /tmp/logpipe_err && \
-  chown "$1" /tmp/logpipe* && shift || return
-  cat <> /tmp/logpipe_out &
-  cat <> /tmp/logpipe_err >&2 &
+  eval $sudo mkfifo -m 600 /tmp/logpipe_out && eval $sudo mkfifo -m 600 /tmp/logpipe_err || \
+    return
+  eval $sudo cat <> /tmp/logpipe_out &
+  eval $sudo cat <> /tmp/logpipe_err >&2 &
   argsep ',;' foreach linklogfile "$@"
 }
 
