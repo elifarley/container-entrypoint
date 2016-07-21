@@ -10,5 +10,4 @@ ENTRYPOINT ["tini", "--", "/usr/local/bin/entrypoint"]
 # 'entrypoint' will run $HOME/app.sh by default
 ```
 
-## See also
-https://github.com/elifarley/docker-cep
+See more complete usage examples at https://github.com/elifarley/docker-cep
