@@ -89,7 +89,7 @@ test root != "$_USER" && test -d /etc/ssh && \
 
 test "$(id -un)" = "$_USER" && sudo='' || {
   sudo="$(psudo "$_USER")" || return
-  ln() { $sudo ln "$@"; }
+  ln() { eval $sudo ln "$@"; }
 }
 
 test "$CEP_LOG_FILES" && linklogfiles "$CEP_LOG_FILES"; unset ln
