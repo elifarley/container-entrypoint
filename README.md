@@ -2,7 +2,7 @@
 
 
 ```
-# Automatically create symlinks for log files below.
+# Automatically redirect the log files below to /dev/stdout and /dev/stderr
 # See https://github.com/jwilder/dockerize
 ENV CEP_LOG_FILES=/var/log/nginx/access.log:out,/var/log/nginx/error.log:err
 
