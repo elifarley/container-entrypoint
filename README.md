@@ -11,3 +11,5 @@ ENTRYPOINT ["tini", "--", "/usr/local/bin/entrypoint"]
 ```
 
 See more complete usage examples at https://github.com/elifarley/docker-cep
+
+For info on **tini**, see https://github.com/krallin/tini
