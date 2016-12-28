@@ -103,7 +103,11 @@ test -x "$_home"/app-before-start.sh && {
 }
 
 id $_USER
-test $# -eq 0 && test -x "$_home"/app.sh && set -- "$_home"/app.sh
+
+test $# -eq 0 -o "$1" = '--' && {
+  test "$1" = '--' && shift
+  test -x "$_home"/app.sh && set -- "$_home"/app.sh "$@"
+}
 echo "[$_USER] About to run: $*"
 
 printf "exec $sudo $*
