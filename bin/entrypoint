@@ -5,6 +5,7 @@ set -e
 test "$DEBUG" && set -x
 
 _home="$(eval echo ~"$_USER")"; test -e "$_home" || _home="$HOME"
+export _home
 
 _INCLUDES='env-vars main'
 for item in $_INCLUDES; do . "$CMD_BASE/../lib/$item.sh"; done
