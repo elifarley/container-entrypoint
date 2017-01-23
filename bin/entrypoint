@@ -92,6 +92,7 @@ test "$(id -un)" = "$_USER" && sudo='' || {
   sudo="$(psudo "$_USER")" || return
   ln() { eval $sudo ln "$@"; }
 }
+export sudo
 
 test "$CEP_LOG_FILES" && linklogfiles "$_USER" "$CEP_LOG_FILES"; unset ln
 
