@@ -23,6 +23,10 @@ test -S /var/run/docker.sock && test $(id -u "$_USER") != $(stat -c "%u" /var/ru
     usermod -g "$docker_gid" $_USER
 }
 
+test -d /mnt-lib-repo && test -S /var/run/docker.sock && which docker 1>/dev/null 2>/dev/null && {
+  ldd_fix docker /mnt-lib-repo || return
+}
+
 MNT_DIR="${MNT_DIR:-/data}"
 if test -e "$MNT_DIR"; then
   mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
