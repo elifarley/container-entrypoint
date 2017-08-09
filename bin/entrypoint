@@ -15,36 +15,11 @@ test -f "$_home"/build-info.txt && echo "$_home/build-info.txt:" && cat "$_home"
 
 SSH_CONFIG_VOLUME="${SSH_CONFIG_VOLUME:-/mnt-ssh-config}"
 
-# If UID of docker.sock is not the same...
-test -S /var/run/docker.sock && test $(id -u "$_USER") != $(stat -c "%u" /var/run/docker.sock) && {
-  docker_gid=$(stat -c "%g" /var/run/docker.sock)
-  getent group "$docker_gid" || groupadd -g "$docker_gid" docker
-  test $docker_gid -ne $(id -g "$_USER") && \
-    echo "Changing GID of '$_USER' from '$(id -g "$_USER")' to '$docker_gid' so that it matches that of '/var/run/docker.sock'..." && \
-    usermod -g "$docker_gid" $_USER
+test "$BUILD_MONIKER_XXX_DISABLED" && {
+  echo "Hostname: changing from '$(cat /etc/hostname)' to '$BUILD_MONIKER'..."
+  hostname "$BUILD_MONIKER" && echo "$BUILD_MONIKER" > /etc/hostname || \
+    echo "Unable to change hostname."
 }
-
-test -d /mnt-lib-repo && test -S /var/run/docker.sock && which docker 1>/dev/null 2>/dev/null && {
-  ldd_fix docker /mnt-lib-repo || return
-}
-
-MNT_DIR="${MNT_DIR:-/data}"
-if test -e "$MNT_DIR"; then
-  mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
-  test $mnt_dir_uid -ne $(id -u "$_USER") && {
-    if getent >/dev/null passwd $mnt_dir_uid; then
-      echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
-      echo "'$MNT_DIR' is owned by an existing user. Let's change its owner to '$_USER'..."
-      chown "$_USER" "$MNT_DIR" || return
-    else
-      echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of '$MNT_DIR'..."
-      usermod -u $mnt_dir_uid "$_USER" || return
-    fi
-  }
-else
-  echo "Creating '$MNT_DIR'..."
-  mkdir "$MNT_DIR" && chown "$_USER:$_USER" "$MNT_DIR"
-fi
 
 test -d "$_home"/.ssh || mkdir "$_home"/.ssh
 # Fix permissions, if writable
@@ -65,21 +40,9 @@ test ! -f "$_file" && echo "WARNING: No SSH authorized_keys found at '$_file'" |
 }
 
 _file="$_home"/.ssh/known_hosts
-test -e "$_file" && printf "\n$_file:\n"; cat "$_file"; echo
+test -e "$_file" && printf "\n$_file:\n"; cat "$_file" && echo
 
 setup_env_vars
-
-test -r "$_home"/.ssh/docker-config.json && {
-  mkdir -p "$_home"/.docker
-  test -f "$_home"/.docker/config.json || \
-    ln -sv ../.ssh/docker-config.json "$_home"/.docker/config.json
-}
-
-test "$BUILD_MONIKER_XXX_DISABLED" && {
-  echo "Hostname: changing from '$(cat /etc/hostname)' to '$BUILD_MONIKER'..."
-  hostname "$BUILD_MONIKER" && echo "$BUILD_MONIKER" > /etc/hostname || \
-    echo "Unable to change hostname."
-}
 
 # Copy default config from cache
 dir_not_empty /etc/ssh || {
@@ -106,6 +69,43 @@ test "$(id -un)" = "$_USER" && sudo='' || {
 export sudo
 
 test "$CEP_LOG_FILES" && linklogfiles "$_USER" "$CEP_LOG_FILES"; unset ln
+
+MNT_DIR="${MNT_DIR:-/data}"
+if test -e "$MNT_DIR"; then
+  mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
+  test $mnt_dir_uid -ne $(id -u "$_USER") && {
+    if getent >/dev/null passwd $mnt_dir_uid; then
+      echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
+      echo "'$MNT_DIR' is owned by an existing user. Let's change its owner to '$_USER'..."
+      chown "$_USER" "$MNT_DIR" || return
+    else
+      echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of '$MNT_DIR'..."
+      usermod -u $mnt_dir_uid "$_USER" || return
+    fi
+  }
+else
+  echo "Creating '$MNT_DIR'..."
+  mkdir "$MNT_DIR" && chown "$_USER:$_USER" "$MNT_DIR"
+fi
+
+test -r "$_home"/.ssh/docker-config.json && {
+  mkdir -p "$_home"/.docker
+  test -f "$_home"/.docker/config.json || \
+    ln -sv ../.ssh/docker-config.json "$_home"/.docker/config.json
+}
+
+# If UID of docker.sock is not the same...
+test -S /var/run/docker.sock && test $(id -u "$_USER") != $(stat -c "%u" /var/run/docker.sock) && {
+  docker_gid=$(stat -c "%g" /var/run/docker.sock)
+  getent group "$docker_gid" || groupadd -g "$docker_gid" docker
+  test $docker_gid -ne $(id -g "$_USER") && \
+    echo "Changing GID of '$_USER' from '$(id -g "$_USER")' to '$docker_gid' so that it matches that of '/var/run/docker.sock'..." && \
+    usermod -g "$docker_gid" $_USER
+}
+
+test -d /mnt-lib-repo && test -S /var/run/docker.sock && which docker 1>/dev/null 2>/dev/null && {
+  ldd_fix docker /mnt-lib-repo || return
+}
 
 test -x /usr/local/bin/keytool-import-certs && dir_not_empty "$SSH_CONFIG_VOLUME"/certs && \
   /usr/local/bin/keytool-import-certs --force
