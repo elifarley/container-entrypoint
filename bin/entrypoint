@@ -13,13 +13,13 @@ for item in $_INCLUDES; do . "$CMD_BASE/../lib/$item.sh"; done
 test -f "$_home"/image-build.log && echo "$_home/image-build.log:" && cat "$_home"/image-build.log && echo
 test -f "$_home"/build-info.txt && echo "$_home/build-info.txt:" && cat "$_home"/build-info.txt && echo
 
-SSH_CONFIG_VOLUME="${SSH_CONFIG_VOLUME:-/mnt-ssh-config}"
-
 test "$BUILD_MONIKER_XXX_DISABLED" && {
   echo "Hostname: changing from '$(cat /etc/hostname)' to '$BUILD_MONIKER'..."
   hostname "$BUILD_MONIKER" && echo "$BUILD_MONIKER" > /etc/hostname || \
     echo "Unable to change hostname."
 }
+
+SSH_CONFIG_VOLUME="${SSH_CONFIG_VOLUME:-/mnt-ssh-config}"
 
 test -d "$_home"/.ssh || mkdir "$_home"/.ssh
 # Fix permissions, if writable
@@ -28,7 +28,7 @@ test ! -w "$_home"/.ssh && echo "WARNING: '$_home/.ssh' is not writeable" || {
   dir_not_empty "$SSH_CONFIG_VOLUME" && {
     echo "Copying SSH files: '$SSH_CONFIG_VOLUME' -> '$_home/.ssh'..."
     ls -lhFa "$_home"/.ssh && \
-    cp -a "$SSH_CONFIG_VOLUME"/* "$_home"/.ssh && \
+    cp -av "$SSH_CONFIG_VOLUME"/* "$_home"/.ssh && \
     ls -lhFa "$_home"/.ssh || return
   }
   chown -R $_USER:$_USER "$_home"/.ssh && chmod -R 600 "$_home"/.ssh && chmod 700 "$_home"/.ssh
@@ -40,7 +40,7 @@ test ! -f "$_file" && echo "WARNING: No SSH authorized_keys found at '$_file'" |
 }
 
 _file="$_home"/.ssh/known_hosts
-test -e "$_file" && printf "\n$_file:\n"; cat "$_file" && echo
+test -e "$_file" && printf "\n$_file:\n"; cat "$_file" && printf '\n\n'
 
 setup_env_vars
 
@@ -70,29 +70,25 @@ export sudo
 
 test "$CEP_LOG_FILES" && linklogfiles "$_USER" "$CEP_LOG_FILES"; unset ln
 
-MNT_DIR="${MNT_DIR:-/data}"
-if test -e "$MNT_DIR"; then
-  mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
+DATA_DIR="${DATA_DIR:-/data}"
+if test -e "$DATA_DIR"; then
+  mnt_dir_uid=$(stat -c "%u" "$DATA_DIR")
   test $mnt_dir_uid -ne $(id -u "$_USER") && {
     if getent >/dev/null passwd $mnt_dir_uid; then
-      echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
-      echo "'$MNT_DIR' is owned by an existing user. Let's change its owner to '$_USER'..."
-      chown "$_USER" "$MNT_DIR" || return
+      echo "$DATA_DIR:"; ls -lhFa "$DATA_DIR"
+      echo "Data dir '$DATA_DIR' is owned by an existing user. Let's change its owner to '$_USER'..."
+      chown "$_USER" "$DATA_DIR" || return
     else
-      echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of '$MNT_DIR'..."
+      echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of data dir '$DATA_DIR'..."
       usermod -u $mnt_dir_uid "$_USER" || return
     fi
   }
 else
-  echo "Creating '$MNT_DIR'..."
-  mkdir "$MNT_DIR" && chown "$_USER:$_USER" "$MNT_DIR"
+  echo "Creating data dir '$DATA_DIR'..."
+  mkdir "$DATA_DIR" && chown "$_USER:$_USER" "$DATA_DIR"
 fi
 
-test -r "$_home"/.ssh/docker-config.json && {
-  mkdir -p "$_home"/.docker
-  test -f "$_home"/.docker/config.json || \
-    ln -sv ../.ssh/docker-config.json "$_home"/.docker/config.json
-}
+# ----------------------------- Docker -----------------------------
 
 # If UID of docker.sock is not the same...
 test -S /var/run/docker.sock && test $(id -u "$_USER") != $(stat -c "%u" /var/run/docker.sock) && {
@@ -103,9 +99,17 @@ test -S /var/run/docker.sock && test $(id -u "$_USER") != $(stat -c "%u" /var/ru
     usermod -g "$docker_gid" $_USER
 }
 
+test -r "$_home"/.ssh/docker-config.json && {
+  mkdir -p "$_home"/.docker
+  test -f "$_home"/.docker/config.json || \
+    ln -sv ../.ssh/docker-config.json "$_home"/.docker/config.json
+}
+
 test -d /mnt-lib-repo && test -S /var/run/docker.sock && which docker 1>/dev/null 2>/dev/null && {
   ldd_fix docker /mnt-lib-repo || return
 }
+
+# ----------------------------- /Docker -----------------------------
 
 test -x /usr/local/bin/keytool-import-certs && dir_not_empty "$SSH_CONFIG_VOLUME"/certs && \
   /usr/local/bin/keytool-import-certs --force
@@ -121,8 +125,8 @@ test $# -eq 0 -o "$1" = '--' && {
   test "$1" = '--' && shift
   test -x "$_home"/app.sh && set -- "$_home"/app.sh "$@"
 }
-echo "[$_USER] About to run: $*"
 
-printf "exec $sudo $*
+printf "\nexec $sudo $*
 ---------------------------------\n
-" && exec $sudo "$@"
+"
+exec $sudo "$@"
