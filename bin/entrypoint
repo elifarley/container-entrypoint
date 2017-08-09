@@ -24,10 +24,9 @@ SSH_CONFIG_VOLUME="${SSH_CONFIG_VOLUME:-/mnt-ssh-config}"
 test -d "$_home"/.ssh || mkdir "$_home"/.ssh
 # Fix permissions, if writable
 test ! -w "$_home"/.ssh && echo "WARNING: '$_home/.ssh' is not writeable" || {
-  touch "$_home"/.ssh/environment || return
   dir_not_empty "$SSH_CONFIG_VOLUME" && {
     echo "Copying SSH files: '$SSH_CONFIG_VOLUME' -> '$_home/.ssh'..."
-    ls -lhFa "$_home"/.ssh && \
+    ls -lhFa "$_home"/.ssh && touch "$_home"/.ssh/environment && \
     cp -av "$SSH_CONFIG_VOLUME"/* "$_home"/.ssh && \
     ls -lhFa "$_home"/.ssh || return
   }
