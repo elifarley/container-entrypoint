@@ -69,22 +69,23 @@ export sudo
 
 test "$CEP_LOG_FILES" && linklogfiles "$_USER" "$CEP_LOG_FILES"; unset ln
 
-DATA_DIR="${DATA_DIR:-/data}"
-if test -e "$DATA_DIR"; then
-  mnt_dir_uid=$(stat -c "%u" "$DATA_DIR")
+# MNT_DIR is used by child Docker files
+MNT_DIR="${MNT_DIR:-/data}"
+if test -e "$MNT_DIR"; then
+  mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
   test $mnt_dir_uid -ne $(id -u "$_USER") && {
     if getent >/dev/null passwd $mnt_dir_uid; then
-      echo "$DATA_DIR:"; ls -lhFa "$DATA_DIR"
-      echo "Data dir '$DATA_DIR' is owned by an existing user. Let's change its owner to '$_USER'..."
-      chown "$_USER" "$DATA_DIR" || return
+      echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
+      echo "Data dir '$MNT_DIR' is owned by an existing user. Let's change its owner to '$_USER'..."
+      chown "$_USER" "$MNT_DIR" || return
     else
-      echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of data dir '$DATA_DIR'..."
+      echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of data dir '$MNT_DIR'..."
       usermod -u $mnt_dir_uid "$_USER" || return
     fi
   }
 else
-  echo "Creating data dir '$DATA_DIR'..."
-  mkdir "$DATA_DIR" && chown "$_USER:$_USER" "$DATA_DIR"
+  echo "Creating data dir '$MNT_DIR'..."
+  mkdir "$MNT_DIR" && chown "$_USER:$_USER" "$MNT_DIR"
 fi
 
 # ----------------------------- Docker -----------------------------
