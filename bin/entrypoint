@@ -11,6 +11,7 @@ _INCLUDES='env-vars main'
 for item in $_INCLUDES; do . "$CMD_BASE/../lib/$item.sh"; done
 
 test -f "$_home"/image-build.log && echo "$_home/image-build.log:" && cat "$_home"/image-build.log && echo
+test -f "$_home"/build-info.txt && echo "$_home/build-info.txt:" && cat "$_home"/build-info.txt && echo
 
 SSH_CONFIG_VOLUME="${SSH_CONFIG_VOLUME:-/mnt-ssh-config}"
 
@@ -49,11 +50,22 @@ test -d "$_home"/.ssh || mkdir "$_home"/.ssh
 # Fix permissions, if writable
 test ! -w "$_home"/.ssh && echo "WARNING: '$_home/.ssh' is not writeable" || {
   touch "$_home"/.ssh/environment || return
-  dir_not_empty "$SSH_CONFIG_VOLUME" && cp -av "$SSH_CONFIG_VOLUME"/* "$_home"/.ssh
+  dir_not_empty "$SSH_CONFIG_VOLUME" && {
+    echo "Copying SSH files: '$SSH_CONFIG_VOLUME' -> '$_home/.ssh'..."
+    ls -lhFa "$_home"/.ssh && \
+    cp -a "$SSH_CONFIG_VOLUME"/* "$_home"/.ssh && \
+    ls -lhFa "$_home"/.ssh || return
+  }
   chown -R $_USER:$_USER "$_home"/.ssh && chmod -R 600 "$_home"/.ssh && chmod 700 "$_home"/.ssh
 }
 
-test -f "$_home"/build-info.txt && echo "$_home/build-info.txt:" && cat "$_home"/build-info.txt && echo
+_file="$_home"/.ssh/authorized_keys
+test ! -f "$_file" && echo "WARNING: No SSH authorized_keys found at '$_file'" || {
+  printf "\n$_file:\n"; cat "$_file"; echo
+}
+
+_file="$_home"/.ssh/known_hosts
+test -e "$_file" && printf "\n$_file:\n"; cat "$_file"; echo
 
 setup_env_vars
 
@@ -63,7 +75,7 @@ test -r "$_home"/.ssh/docker-config.json && {
     ln -sv ../.ssh/docker-config.json "$_home"/.docker/config.json
 }
 
-test "$BUILD_MONIKER" && {
+test "$BUILD_MONIKER_XXX_DISABLED" && {
   echo "Hostname: changing from '$(cat /etc/hostname)' to '$BUILD_MONIKER'..."
   hostname "$BUILD_MONIKER" && echo "$BUILD_MONIKER" > /etc/hostname || \
     echo "Unable to change hostname."
@@ -79,11 +91,6 @@ dir_not_empty /etc/ssh || {
 # Generate Host keys, if required
 dir_not_empty /etc/ssh/ssh_host_* || {
   which ssh-keygen >/dev/null 2>&1 && ssh-keygen -A
-}
-
-ak="$_home"/.ssh/authorized_keys
-test ! -f "$ak" && echo "WARNING: No SSH authorized_keys found at '$ak'" || {
-  printf "\n$ak:\n"; cat "$ak"; echo
 }
 
 # Allow running SSHD as non-root user
