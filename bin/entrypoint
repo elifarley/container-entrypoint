@@ -101,8 +101,10 @@ test -S /var/run/docker.sock && test $(id -u "$_USER") != $(stat -c "%u" /var/ru
 
 test -r "$_home"/.ssh/docker-config.json && {
   mkdir -p "$_home"/.docker
-  test -f "$_home"/.docker/config.json || \
-    ln -sv ../.ssh/docker-config.json "$_home"/.docker/config.json
+  test -f "$_home"/.docker/config.json || {
+    ln -sv ../.ssh/docker-config.json "$_home"/.docker/config.json || \
+    ls -Falk "$_home"/.docker
+  }
 }
 
 test -d /mnt-lib-repo && test -S /var/run/docker.sock && which docker 1>/dev/null 2>/dev/null && {
