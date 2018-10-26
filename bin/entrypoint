@@ -51,8 +51,8 @@ dir_not_empty /etc/ssh || {
 
 # Generate Host keys, if required
 dir_not_empty /etc/ssh/ssh_host_* && echo "Host keys present." || {
-  echo "Generating host keys..."
-  which ssh-keygen >/dev/null 2>&1 && ssh-keygen -A || echo "'ssh-keygen' missing."
+  which ssh-keygen >/dev/null 2>&1 && ssh-keygen -A && ls -lhFa /etc/ssh/ssh_host_* || \
+    echo "'ssh-keygen' missing."
 }
 
 # Allow running SSHD as non-root user
