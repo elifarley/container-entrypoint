@@ -19,6 +19,29 @@ test "$BUILD_MONIKER_XXX_DISABLED" && {
     echo "Unable to change hostname."
 }
 
+# ---------------------- UID from mounted volume ----------------------
+# MNT_DIR is used by child Docker files
+MNT_DIR="${MNT_DIR:-/data}"
+if test -e "$MNT_DIR"; then
+  mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
+  test $mnt_dir_uid -ne $(id -u "$_USER") && {
+    if getent >/dev/null passwd $mnt_dir_uid; then
+      echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
+      echo "Data dir '$MNT_DIR' is owned by an existing user. Changing $(getent passwd $mnt_dir_uid)'s UID to 65000"
+      # mnt_dir user's UID is set to 65000,
+      # then $_USER's UID is set to $mnt_dir_uid
+      usermod -u 65000 "$(getent passwd $mnt_dir_uid | cut -d: -f1)" || exit
+      getent passwd 65000
+    fi
+    echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of data dir '$MNT_DIR'..."
+    usermod -u $mnt_dir_uid "$_USER" || exit
+    getent passwd "$_USER"
+  }
+else
+  echo "Creating data dir '$MNT_DIR'..."
+  mkdir "$MNT_DIR" && chown "$_USER:$_USER" "$MNT_DIR"
+fi
+
 SSH_CONFIG_VOLUME="${SSH_CONFIG_VOLUME:-/mnt-ssh-config}"
 
 test -d "$_home"/.ssh || mkdir "$_home"/.ssh
@@ -68,28 +91,6 @@ test "$(id -un)" = "$_USER" && sudo='' || {
 export sudo
 
 test "$CEP_LOG_FILES" && linklogfiles "$_USER" "$CEP_LOG_FILES"; unset ln
-
-# MNT_DIR is used by child Docker files
-MNT_DIR="${MNT_DIR:-/data}"
-if test -e "$MNT_DIR"; then
-  mnt_dir_uid=$(stat -c "%u" "$MNT_DIR")
-  test $mnt_dir_uid -ne $(id -u "$_USER") && {
-    if getent >/dev/null passwd $mnt_dir_uid; then
-      echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
-      echo "Data dir '$MNT_DIR' is owned by an existing user. Changing $(getent passwd $mnt_dir_uid)'s UID to 65000"
-      # mnt_dir user's UID is set to 65000,
-      # then $_USER's UID is set to $mnt_dir_uid
-      usermod -u 65000 "$(getent passwd $mnt_dir_uid | cut -d: -f1)" || exit
-      getent passwd 65000
-    fi
-    echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of data dir '$MNT_DIR'..."
-    usermod -u $mnt_dir_uid "$_USER" || exit
-    getent passwd "$_USER"
-  }
-else
-  echo "Creating data dir '$MNT_DIR'..."
-  mkdir "$MNT_DIR" && chown "$_USER:$_USER" "$MNT_DIR"
-fi
 
 # ----------------------------- Docker -----------------------------
 
