@@ -76,13 +76,15 @@ if test -e "$MNT_DIR"; then
   test $mnt_dir_uid -ne $(id -u "$_USER") && {
     if getent >/dev/null passwd $mnt_dir_uid; then
       echo "$MNT_DIR:"; ls -lhFa "$MNT_DIR"
-      echo "Data dir '$MNT_DIR' is owned by an existing user ($(getent passwd $mnt_dir_uid)). Let's change its owner to '$_USER'..."
+      echo "Data dir '$MNT_DIR' is owned by an existing user. Changing $(getent passwd $mnt_dir_uid)'s UID to 65000"
       # mnt_dir user's UID is set to 65000,
       # then $_USER's UID is set to $mnt_dir_uid
       usermod -u 65000 "$(getent passwd $mnt_dir_uid | cut -d: -f1)" || return
+      getent passwd 65000
     fi
     echo "Changing UID of '$_USER' from '$(id -u "$_USER")' to '$mnt_dir_uid' so that it matches that of data dir '$MNT_DIR'..."
     usermod -u $mnt_dir_uid "$_USER" || return
+    getent passwd "$_USER"
   }
 else
   echo "Creating data dir '$MNT_DIR'..."
