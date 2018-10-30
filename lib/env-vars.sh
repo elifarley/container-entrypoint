@@ -11,7 +11,7 @@ process_env_file() {
 }
 
 setup_env_vars() {
-  local ENV_VARS_DIR="${ENV_VARS_DIR:-/mnt-env-vars}"
+  local ENV_VARS_DIR="${ENV_VARS_DIR:-/data/env-vars}"
   local PHUSION_ENV_DIR=/etc/container_environment
   local SSH_ENVIRONMENT_FILE="$HOME"/.ssh/environment
 
@@ -28,7 +28,11 @@ setup_env_vars() {
 
   test -d "$ENV_VARS_DIR" && test "$(ls -A "$ENV_VARS_DIR")" || {
     echo "No env var files at '$ENV_VARS_DIR'"
-    return
+    ENV_VARS_DIR=/mnt-env-vars
+    test -d "$ENV_VARS_DIR" && test "$(ls -A "$ENV_VARS_DIR")" || {
+      echo "No env var files at '$ENV_VARS_DIR'"
+      return
+    }
   }
 
   test -d "$PHUSION_ENV_DIR" && {
