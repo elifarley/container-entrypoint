@@ -7,7 +7,7 @@ process_env_file() {
   local name="$(basename "$env_file")"; local val="$(cat "$env_file")"
   echo "$name='$val'"
   test "$to_export" && export "$name"="$val"
-  printf "%s='%s'\n" "$name" "$val" >> "$SSH_ENVIRONMENT_FILE"
+  printf "%s=%s\n" "$name" "$val" >> "$SSH_ENVIRONMENT_FILE"
 }
 
 setup_env_vars() {
